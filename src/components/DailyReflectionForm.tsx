@@ -78,7 +78,7 @@ function DailyReflectionForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md relative">
+    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full">
       {isLoading && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
