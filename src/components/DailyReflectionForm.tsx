@@ -17,34 +17,42 @@ function DailyReflectionForm() {
   const [social, setSocial] = useState<number>(5);
   const [overall, setOverall] = useState<number>(5);
   const [journal, setJournal] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchEntry = async () => {
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
+      setIsLoading(true);
+      try {
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
 
-      const q = query(
-        collection(db, 'entries'),
-        where('date', ">=", Timestamp.fromDate(dayStart)),
-        where('date', "<=", Timestamp.fromDate(dayEnd))
-      );
+        const q = query(
+          collection(db, 'entries'),
+          where('date', ">=", Timestamp.fromDate(dayStart)),
+          where('date', "<=", Timestamp.fromDate(dayEnd))
+        );
 
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const data = snapshot.docs[0].data();
-        setSelf(data.self);
-        setInterpersonal(data.interpersonal);
-        setSocial(data.social);
-        setOverall(data.overall);
-        setJournal(data.journal);
-      } else {
-        setSelf(5);
-        setInterpersonal(5);
-        setSocial(5);
-        setOverall(5);
-        setJournal('');
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          setSelf(data.self);
+          setInterpersonal(data.interpersonal);
+          setSocial(data.social);
+          setOverall(data.overall);
+          setJournal(data.journal);
+        } else {
+          setSelf(5);
+          setInterpersonal(5);
+          setSocial(5);
+          setOverall(5);
+          setJournal('');
+        }
+      } catch (error) {
+        console.error('Error fetching entry:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -70,7 +78,13 @@ function DailyReflectionForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md relative">
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+      
       <h1 className="text-2xl font-bold mb-4">Daily Reflection</h1>
       <label className="block mb-2">Date</label>
       <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mb-4 w-full border rounded px-3 py-2" />
