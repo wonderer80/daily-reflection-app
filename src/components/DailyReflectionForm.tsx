@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 function DailyReflectionForm() {
   // 한국 시간대(KST) 기준으로 현재 날짜를 설정
@@ -8,10 +10,10 @@ function DailyReflectionForm() {
     const now = new Date();
     const kstOffset = 9 * 60 * 60 * 1000; // KST는 UTC+9
     const kstDate = new Date(now.getTime() + kstOffset);
-    return kstDate.toISOString().split('T')[0];
+    return kstDate;
   };
 
-  const [date, setDate] = useState<string>(getCurrentDate());
+  const [selectedDate, setSelectedDate] = useState<Date>(getCurrentDate());
   const [self, setSelf] = useState<number>(5);
   const [interpersonal, setInterpersonal] = useState<number>(5);
   const [social, setSocial] = useState<number>(5);
@@ -19,13 +21,19 @@ function DailyReflectionForm() {
   const [journal, setJournal] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const handleDateChange = (days: number) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + days);
+    setSelectedDate(newDate);
+  };
+
   useEffect(() => {
     const fetchEntry = async () => {
       setIsLoading(true);
       try {
-        const dayStart = new Date(date);
+        const dayStart = new Date(selectedDate);
         dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(date);
+        const dayEnd = new Date(selectedDate);
         dayEnd.setHours(23, 59, 59, 999);
 
         const q = query(
@@ -57,13 +65,13 @@ function DailyReflectionForm() {
     };
 
     fetchEntry();
-  }, [date]);
+  }, [selectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await addDoc(collection(db, 'entries'), {
-        date: Timestamp.fromDate(new Date(date)),
+        date: Timestamp.fromDate(selectedDate),
         self,
         interpersonal,
         social,
@@ -78,7 +86,7 @@ function DailyReflectionForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full">
+    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full relative">
       {isLoading && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -86,8 +94,34 @@ function DailyReflectionForm() {
       )}
       
       <h1 className="text-2xl font-bold mb-4">Daily Reflection</h1>
-      <label className="block mb-2">Date</label>
-      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mb-4 w-full border rounded px-3 py-2" />
+      
+      {/* 날짜 선택 UI */}
+      <div className="flex items-center gap-2 mb-6">
+        <button
+          type="button"
+          onClick={() => handleDateChange(-1)}
+          className="shrink-0 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          ←
+        </button>
+        
+        <DatePicker
+          selected={selectedDate}
+          onChange={(date: Date | null) => date && setSelectedDate(date)}
+          dateFormat="yyyy-MM-dd"
+          className="w-full border rounded-lg px-3 py-2 text-center cursor-pointer"
+          showPopperArrow={false}
+          wrapperClassName="flex-1"
+        />
+        
+        <button
+          type="button"
+          onClick={() => handleDateChange(1)}
+          className="shrink-0 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          →
+        </button>
+      </div>
 
       <label className="block mt-2">Self</label>
       <input type="range" min="0" max="10" value={self} onChange={(e) => setSelf(Number(e.target.value))} className="w-full" />
