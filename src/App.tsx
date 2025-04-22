@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DailyReflectionForm from './components/DailyReflectionForm';
 import { ORSChart } from './components/ORSChart';
+import Auth from './components/Auth';
 
 type TabType = 'form' | 'chart';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('form');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem('isAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  if (!isAuthenticated) {
+    return <Auth onAuth={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8">
@@ -45,6 +58,17 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* 로그아웃 버튼 */}
+      <button
+        onClick={() => {
+          localStorage.removeItem('isAuthenticated');
+          setIsAuthenticated(false);
+        }}
+        className="mt-4 px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+      >
+        Logout
+      </button>
     </div>
   );
 }
