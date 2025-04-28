@@ -98,25 +98,49 @@ export function ORSChart() {
       {
         label: 'Self',
         data: data.map(d => d.self),
-        borderColor: 'rgb(255, 99, 132)',
+        borderColor: 'rgba(255, 99, 132, 0.6)',
+        backgroundColor: 'rgba(255, 99, 132, 0.15)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: 'rgba(255, 99, 132, 0.8)',
+        borderDash: [6, 4],
+        order: 2,
         tension: 0.1
       },
       {
         label: 'Interpersonal',
         data: data.map(d => d.interpersonal),
-        borderColor: 'rgb(54, 162, 235)',
+        borderColor: 'rgba(54, 162, 235, 0.6)',
+        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: 'rgba(54, 162, 235, 0.8)',
+        borderDash: [2, 4],
+        order: 2,
         tension: 0.1
       },
       {
         label: 'Social',
         data: data.map(d => d.social),
-        borderColor: 'rgb(75, 192, 192)',
+        borderColor: 'rgba(75, 192, 192, 0.6)',
+        backgroundColor: 'rgba(75, 192, 192, 0.15)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: 'rgba(75, 192, 192, 0.8)',
+        borderDash: [1, 2],
+        order: 2,
         tension: 0.1
       },
       {
         label: 'Overall',
         data: data.map(d => d.overall),
-        borderColor: 'rgb(153, 102, 255)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        borderWidth: 4,
+        pointRadius: 6,
+        pointBackgroundColor: 'rgba(153, 102, 255, 1)',
+        borderDash: [],
+        order: 1,
         tension: 0.1
       }
     ]
