@@ -4,8 +4,19 @@ import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/f
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-function DailyReflectionForm() {
-  // 한국 시간대(KST) 기준으로 현재 날짜를 설정
+interface DailyReflectionFormProps {
+  setMessage: (msg: string) => void;
+}
+
+/**
+ * 일일 반성 입력 폼 컴포넌트
+ * 사용자가 날짜별로 자신의 상태를 기록하고 저장할 수 있습니다.
+ */
+const DailyReflectionForm: React.FC<DailyReflectionFormProps> = ({ setMessage }) => {
+  /**
+   * 한국 시간대(KST) 기준으로 현재 날짜를 반환합니다.
+   * @returns {Date} KST 기준의 현재 날짜
+   */
   const getCurrentDate = () => {
     const now = new Date();
     const kstOffset = 9 * 60 * 60 * 1000; // KST는 UTC+9
@@ -21,6 +32,10 @@ function DailyReflectionForm() {
   const [journal, setJournal] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  /**
+   * 날짜를 지정된 일수만큼 이동합니다.
+   * @param days 이동할 일수 (음수: 과거, 양수: 미래)
+   */
   const handleDateChange = (days: number) => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + days);
@@ -30,6 +45,8 @@ function DailyReflectionForm() {
   useEffect(() => {
     const fetchEntry = async () => {
       setIsLoading(true);
+      setMessage('');
+
       try {
         const dayStart = new Date(selectedDate);
         dayStart.setHours(0, 0, 0, 0);
@@ -59,16 +76,23 @@ function DailyReflectionForm() {
         }
       } catch (error) {
         console.error('Error fetching entry:', error);
+        setMessage('데이터를 불러오는 중 오류가 발생했습니다.');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchEntry();
-  }, [selectedDate]);
+  }, [selectedDate, setMessage]);
 
+  /**
+   * 폼 제출을 처리하는 함수
+   * 현재 입력된 데이터를 Firebase에 저장합니다.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage('');
+    
     try {
       await addDoc(collection(db, 'entries'), {
         date: Timestamp.fromDate(selectedDate),
@@ -79,9 +103,12 @@ function DailyReflectionForm() {
         journal,
         createdAt: Timestamp.now(),
       });
-      alert('Entry saved!');
+      
+      setMessage('성공적으로 저장되었습니다!');
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      console.error('Error saving entry: ', error);
+      console.error('Error saving entry:', error);
+      setMessage('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -140,11 +167,17 @@ function DailyReflectionForm() {
       <span>{overall}</span>
 
       <label className="block mt-4">Journal</label>
-      <textarea value={journal} onChange={(e) => setJournal(e.target.value)} className="w-full border rounded px-3 py-2 mt-1 mb-4" rows={4} placeholder="Write your reflections here..." />
+      <textarea 
+        value={journal} 
+        onChange={(e) => setJournal(e.target.value)} 
+        className="w-full border rounded px-3 py-2 mt-1 mb-4" 
+        rows={4} 
+        placeholder="Write your reflections here..." 
+      />
 
       <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Submit</button>
     </form>
   );
-}
+};
 
 export default DailyReflectionForm;
