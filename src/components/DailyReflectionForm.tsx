@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -92,23 +92,52 @@ const DailyReflectionForm: React.FC<DailyReflectionFormProps> = ({ setMessage })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
-    
+    setIsLoading(true);
     try {
-      await addDoc(collection(db, 'entries'), {
-        date: Timestamp.fromDate(selectedDate),
-        self,
-        interpersonal,
-        social,
-        overall,
-        journal,
-        createdAt: Timestamp.now(),
-      });
-      
-      setMessage('성공적으로 저장되었습니다!');
+      // 1. 해당 날짜에 이미 데이터가 있는지 확인
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const q = query(
+        collection(db, 'entries'),
+        where('date', ">=", Timestamp.fromDate(dayStart)),
+        where('date', "<=", Timestamp.fromDate(dayEnd))
+      );
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        // 이미 있으면 update
+        const docRef = snapshot.docs[0].ref;
+        await updateDoc(docRef, {
+          self,
+          interpersonal,
+          social,
+          overall,
+          journal,
+          updatedAt: Timestamp.now(),
+        });
+        setMessage('성공적으로 업데이트되었습니다!');
+      } else {
+        // 없으면 add
+        await addDoc(collection(db, 'entries'), {
+          date: Timestamp.fromDate(selectedDate),
+          self,
+          interpersonal,
+          social,
+          overall,
+          journal,
+          createdAt: Timestamp.now(),
+        });
+        setMessage('성공적으로 저장되었습니다!');
+      }
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       console.error('Error saving entry:', error);
       setMessage('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
